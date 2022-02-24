@@ -13,18 +13,10 @@ namespace animalAvecDatabase
         private string nom;
         private int age;
         private float poids;
-        private string couleure;
+        private string couleur;
         private string proprietaire;
+        private int id_owner;
         private MySqlConnection cnn;
-
-        //public int Id { get => id; set => id = value; }
-        //public string TypeAnimal { get => typeAnimal; set => typeAnimal = value; }
-        //public string Nom { get => nom; set => nom = value; }
-        //public int Age { get => age; set => age = value; }
-        //public float Poids { get => poids; set => poids = value; }
-        //public string Couleure { get => couleure; set => couleure = value; }
-        //public string Proprietaire { get => proprietaire; set => proprietaire = value; }
-        //public MySqlConnection Cnn { get => cnn; set => cnn = value; }
 
         public Animal()
         {
@@ -35,7 +27,7 @@ namespace animalAvecDatabase
         public void afficherTitle()
         {
             Console.WriteLine("--------------------------------------------------------------------------------------------------------");
-            Console.WriteLine("ID |TYPE ANIMAL|   NOM   | AGE | POIDS | COULEURE | PROPRIÉTAIRE |");
+            Console.WriteLine("ID |TYPE ANIMAL|   NOM   | AGE | POIDS | COULEUR | PROPRIÉTAIRE |");
             Console.WriteLine("--------------------------------------------------------------------------------------------------------");
         }
 
@@ -44,46 +36,12 @@ namespace animalAvecDatabase
         {
             if (totalAnimaux() < 30)
             {
-                Console.WriteLine("Dans la fonction ajouter un animal");
-                Console.WriteLine("Veuillez saisir le type de l'animal:");
-                typeAnimal = Console.ReadLine();
-
-                Console.WriteLine("Veuillez saisir le nom de l'animal:");
-                nom = Console.ReadLine();
-
-                Console.WriteLine("Veuillez saisir l'age de l'animal:");
-                string inputAge = Console.ReadLine();
-                while (isNumeral(inputAge)==false)
+                saisirInformation();
+                if (trouverProprietaire()==false)
                 {
-                    Console.WriteLine("L'age n'est pas valide");
-                    Console.WriteLine("Veuillez saisir l'age de l'animal:");
-                    inputAge = Console.ReadLine();
+                    ajouterProprietaire();
+                    trouverIdProprietaire();
                 }
-                age = int.Parse(inputAge);
-
-                Console.WriteLine("Veuillez saisir le poids de l'animal:");
-                string inputWeight = Console.ReadLine();
-                while (isNumeral(inputWeight)==false)
-                {
-                    Console.WriteLine("Le poids n'est pas valide");
-                    Console.WriteLine("Veuillez saisir le poids de l'animal:");
-                    inputWeight = Console.ReadLine();
-                }
-                poids = int.Parse(inputWeight);
-
-                Console.WriteLine("Veuillez saisir la couleur de l'animal:");
-                couleure = Console.ReadLine();
-
-                while (traiterAjoutAnimal(couleure) != true)
-                {
-                    Console.WriteLine("La couleur n'est pas valide");
-                    Console.WriteLine("Veuillez saisir la couleur de l'animal:");
-                    couleure = Console.ReadLine();
-                }
-
-                Console.WriteLine("Veuillez saisir le nom du propriétaire de l'animal:");
-                proprietaire = Console.ReadLine();
-
                 insertAnimal();
             }
             else
@@ -92,22 +50,70 @@ namespace animalAvecDatabase
             }
         }
 
+        public void saisirInformation()
+        {
+            Console.WriteLine("Dans la fonction ajouter un animal");
+            Console.WriteLine("Veuillez saisir le type de l'animal:");
+            typeAnimal = Console.ReadLine();
+
+            Console.WriteLine("Veuillez saisir le nom de l'animal:");
+            nom = Console.ReadLine();
+
+            Console.WriteLine("Veuillez saisir l'age de l'animal:");
+            string inputAge = Console.ReadLine();
+            while (isNumeral(inputAge) == false)
+            {
+                Console.WriteLine("L'age n'est pas valide");
+                Console.WriteLine("Veuillez saisir l'age de l'animal:");
+                inputAge = Console.ReadLine();
+            }
+            age = int.Parse(inputAge);
+
+            Console.WriteLine("Veuillez saisir le poids de l'animal:");
+            string inputWeight = Console.ReadLine();
+            while (isNumeral(inputWeight) == false)
+            {
+                Console.WriteLine("Le poids n'est pas valide");
+                Console.WriteLine("Veuillez saisir le poids de l'animal:");
+                inputWeight = Console.ReadLine();
+            }
+            poids = int.Parse(inputWeight);
+
+            Console.WriteLine("Veuillez saisir la couleur de l'animal:");
+            couleur = Console.ReadLine();
+
+            while (traiterAjoutAnimal(couleur) != true)
+            {
+                Console.WriteLine("La couleur n'est pas valide");
+                Console.WriteLine("Veuillez saisir la couleur de l'animal:");
+                couleur = Console.ReadLine();
+            }
+
+            Console.WriteLine("Veuillez saisir le nom du propriétaire de l'animal:");
+            proprietaire = Console.ReadLine();
+        }
+
         private void insertAnimal()
         {
             try
             {
-                cnn.Open();
-                string sql = "INSERT INTO animal (type_animal, nom, age, poids, couleure, proprietaire)" +
-                    "VALUES(@type_animal1, @nom1, @age1, @poids1, @couleure1, @proprietaire1)";
-                MySqlCommand command = new MySqlCommand(sql, cnn);
-                command.Parameters.AddWithValue("@type_animal1", typeAnimal);
-                command.Parameters.AddWithValue("@nom1", nom);
-                command.Parameters.AddWithValue("@age1", age);
-                command.Parameters.AddWithValue("@poids1", poids);
-                command.Parameters.AddWithValue("@couleure1", couleure);
-                command.Parameters.AddWithValue("@proprietaire1", proprietaire);
-
-                command.ExecuteReader();
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                {
+                    cnn.Open();
+                }
+                
+                string sql = "INSERT INTO animal (type_animal, nom, age, poids, couleure, id_proprietaire)" +
+                    "VALUES(@type_animal1, @nom1, @age1, @poids1, @couleur1, @id_owner1);";
+                using (MySqlCommand command = new MySqlCommand(sql, cnn))
+                {
+                    command.Parameters.AddWithValue("@type_animal1", typeAnimal);
+                    command.Parameters.AddWithValue("@nom1", nom);
+                    command.Parameters.AddWithValue("@age1", age);
+                    command.Parameters.AddWithValue("@poids1", poids);
+                    command.Parameters.AddWithValue("@couleur1", couleur);
+                    command.Parameters.AddWithValue("@id_owner1", id_owner);
+                    command.ExecuteNonQuery();
+                }
                 cnn.Close();
             }
             catch (Exception ex)
@@ -116,15 +122,124 @@ namespace animalAvecDatabase
             }
         }
 
-        //**2- Voir la liste de tous les animaux en pension**//
-        public void voirListeAnimauxPension()
+        public bool trouverProprietaire()
+        {
+            bool isfinded = false;
+            try
+            {
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                {
+                    cnn.Open();
+                }
+                MySqlCommand command = new MySqlCommand("SELECT id, prenom FROM proprietaire;", cnn);
+                using (MySqlDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            if (proprietaire == reader.GetString(1))
+                            {
+                                id_owner = reader.GetInt32(0);
+                                isfinded = true;
+                                break;
+                            }
+                            else continue;
+                        }
+                    }
+                    else isfinded = false;
+                }
+                cnn.Close();
+            }
+            catch (Exception ex)
+            {
+                systemError(ex);
+            }
+            return isfinded;
+        }
+
+        public void trouverIdProprietaire()
+        {
+            try
+            {
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                {
+                    cnn.Open();
+                }
+                string sql = "SELECT id FROM proprietaire WHERE prenom=@prenom2;";
+                MySqlCommand command = new MySqlCommand(sql, cnn);
+                
+                command.Parameters.AddWithValue("@prenom2", proprietaire);
+                using (MySqlDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            id_owner = reader.GetInt32(0);
+                        }
+                    }
+                                            
+                }
+                cnn.Close();
+            }
+            catch (Exception ex)
+            {
+                systemError(ex);
+            }
+        }
+
+        public void ajouterProprietaire()
+        {
+            try
+            {
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                {
+                    cnn.Open();
+                }
+                string sql = "INSERT INTO proprietaire (prenom) VALUES (@prenom1);";
+                using (MySqlCommand command = new MySqlCommand(sql, cnn))
+                {
+                    command.Parameters.AddWithValue("@prenom1", proprietaire);
+                    command.ExecuteNonQuery();
+                }
+                cnn.Close();
+            }
+            catch (Exception ex)
+            {
+                systemError(ex);
+            }
+        }
+
+    //**2- Voir la liste de tous les animaux en pension**//
+    public void voirListeAnimauxPension()
         {
             afficherTitle();
             try
             {
-                cnn.Open();
-                MySqlCommand command = new MySqlCommand("SELECT * FROM animal ORDER BY id", cnn);
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                {
+                    cnn.Open();
+                }
+                MySqlCommand command = new MySqlCommand("SELECT a.id, type_animal, a.nom, age, poids, couleure, p.prenom " +
+                    "FROM animal AS a INNER JOIN proprietaire AS p ON p.id=a.id_proprietaire ORDER BY a.id;", cnn);
+                cnn.Close();
+                voirselecteddata(command);
+            }
+            catch (Exception ex)
+            {
+                systemError(ex);
+            }
+        }
 
+        public void voirselecteddata(MySqlCommand command)
+        {
+            try
+            {
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                {
+                    cnn.Open();
+                }
                 using (MySqlDataReader reader = command.ExecuteReader())
                 {
                     if (reader.HasRows)
@@ -136,10 +251,10 @@ namespace animalAvecDatabase
                             nom = reader.GetString(2);
                             age = reader.GetUInt16(3);
                             poids = reader.GetFloat(4);
-                            couleure = reader.GetString(5);
+                            couleur = reader.GetString(5);
                             proprietaire = reader.GetString(6);
                             Console.WriteLine("{0,-4}{1,-12}{2,-11}{3,-6}{4,-8}{5,-11}{6,-16}",
-                                id, typeAnimal, nom, age, poids, couleure, proprietaire);
+                                id, typeAnimal, nom, age, poids, couleur, proprietaire);
                         }
                     }
                 }
@@ -160,8 +275,11 @@ namespace animalAvecDatabase
             Console.WriteLine("--------------------------------------------------------------------------------------------------------");
             try
             {
-                cnn.Open();
-                MySqlCommand command = new MySqlCommand("SELECT proprietaire FROM animal", cnn);
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                {
+                    cnn.Open();
+                }
+                MySqlCommand command = new MySqlCommand("SELECT DISTINCT prenom FROM proprietaire AS p INNER JOIN animal AS a ON p.id=a.id_proprietaire;", cnn);
 
                 using (MySqlDataReader reader = command.ExecuteReader())
                 {
@@ -197,8 +315,11 @@ namespace animalAvecDatabase
             int totalNumber=0;
             try
             {
-                cnn.Open();
-                string sql = "SELECT COUNT(*) FROM animal";
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                {
+                    cnn.Open();
+                }
+                string sql = "SELECT COUNT(*) FROM animal;";
                 MySqlCommand command = new MySqlCommand(sql, cnn);
                 totalNumber = Convert.ToInt32(command.ExecuteScalar());  // the result of request.//
                 cnn.Close();
@@ -221,8 +342,11 @@ namespace animalAvecDatabase
             try
             {
                 float totalPoids = 0;
-                cnn.Open();
-                string sql = "SELECT poids FROM animal";
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                {
+                    cnn.Open();
+                }
+                string sql = "SELECT poids FROM animal;";
                 MySqlCommand command = new MySqlCommand(sql, cnn);
                 MySqlDataReader reader = command.ExecuteReader();
                 if (reader.HasRows)
@@ -246,21 +370,14 @@ namespace animalAvecDatabase
         {
             Console.WriteLine("VEUILLEZ SAISIR LA COULEUR DE RECHERCHE");
             string inputColor = Console.ReadLine();
-            while (traiterAjoutAnimal(inputColor) != true)
-            {
-                Console.WriteLine("La couleur n'est pas valide");
-                Console.WriteLine("Veuillez saisir la couleur de l'animal:");
-                inputColor = Console.ReadLine();
-            }
-            Console.WriteLine("Dans la fonction voir liste animaux pension");
-            Console.WriteLine("--------------------------------------------------------------------------------------------------------");
-            Console.WriteLine("ID |TYPE ANIMAL|  NOM  | COULEUR |");
-            Console.WriteLine("--------------------------------------------------------------------------------------------------------");
-
+            traiterCouleur(inputColor);
             try
             {
-                cnn.Open();
-                string sql = "SELECT id, type_animal,  nom, couleure FROM animal WHERE couleure=@color1";
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                {
+                    cnn.Open();
+                }
+                string sql = "SELECT id, type_animal, nom, couleure FROM animal WHERE couleure=@color1;";
                 MySqlCommand command = new MySqlCommand(sql, cnn);
                 command.Parameters.AddWithValue("@color1", inputColor);
                 MySqlDataReader reader = command.ExecuteReader();
@@ -273,8 +390,7 @@ namespace animalAvecDatabase
                         string resultType = reader.GetString(1);
                         string resultName = reader.GetString(2);
                         string color = reader.GetString(3);
-                        Console.WriteLine("{0,-4}{1,-12}{2,-8}{3,-11}",
-                                      resultID, resultType, resultName, color);
+                        Console.WriteLine("{0,-4}{1,-12}{2,-8}{3,-11}", resultID, resultType, resultName, color);
                     }
                     Console.WriteLine();
                 }
@@ -284,6 +400,20 @@ namespace animalAvecDatabase
             {
                 systemError(ex);
             }
+        }
+
+        public void traiterCouleur(string color)
+        {
+            while (traiterAjoutAnimal(color) != true)
+            {
+                Console.WriteLine("La couleur n'est pas valide");
+                Console.WriteLine("Veuillez saisir la couleur de l'animal:");
+                color = Console.ReadLine();
+            }
+            Console.WriteLine("Dans la fonction voir liste animaux pension");
+            Console.WriteLine("--------------------------------------------------------------------------------------------------------");
+            Console.WriteLine("ID |TYPE ANIMAL|  NOM  | COULEUR |");
+            Console.WriteLine("--------------------------------------------------------------------------------------------------------");
         }
 
         //**7- Retirer un animal de la liste**//
@@ -297,32 +427,30 @@ namespace animalAvecDatabase
            
             try
             {
-                cnn.Open();
-                string sqltemp = "SELECT * FROM animal WHERE id=@id1";
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                {
+                    cnn.Open();
+                }
+                string sqltemp = "SELECT a.id, type_animal, a.nom, age, poids, couleure, p.prenom " +
+                    "FROM animal AS a INNER JOIN proprietaire AS p ON a.id_proprietaire = p.id WHERE a.id = @id1;";
                 MySqlCommand command = new MySqlCommand(sqltemp, cnn);
                 command.Parameters.AddWithValue("@id1", deletId);
                 command.ExecuteReader();
-
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    if (reader.HasRows)
-                    {
-                        while (reader.Read())
-                        {
-                            id = reader.GetInt32(0);
-                            typeAnimal = reader.GetString(1);
-                            nom = reader.GetString(2);
-                            age = reader.GetUInt16(3);
-                            poids = reader.GetFloat(4);
-                            couleure = reader.GetString(5);
-                            proprietaire = reader.GetString(6);
-                            Console.WriteLine("{0,-4}{1,-12}{2,-11}{3,-6}{4,-8}{5,-11}{6,-16}",
-                                id, typeAnimal, nom, age, poids, couleure, proprietaire);
-                        }
-                    }
-                }
                 cnn.Close();
 
+                voirselecteddata(command);
+                confirmerDelete(command, deletId);
+            }
+            catch (Exception ex)
+            {
+                systemError(ex);
+            }
+        }
+
+        public void confirmerDelete(MySqlCommand command, int deletId)
+        {
+            try
+            {
                 string choix;
                 do
                 {
@@ -332,17 +460,23 @@ namespace animalAvecDatabase
                 }
                 while (!(choix == "o" || choix == "n"));
 
-                if (choix == "o")
+                if (cnn.State == System.Data.ConnectionState.Closed)
                 {
                     cnn.Open();
-                    string sql = "DELETE FROM animal WHERE id=@id1";
+                }
+                if (choix == "o")
+                {
+                    string sql = "DELETE FROM animal WHERE id=@id1;";
                     command = new MySqlCommand(sql, cnn);
                     command.Parameters.AddWithValue("@id1", deletId);
                     command.ExecuteReader();
+                    cnn.Close();
                     voirListeAnimauxPension();
+                }
+                else
+                {
                     cnn.Close();
                 }
-                
             }
             catch (Exception ex)
             {
@@ -355,33 +489,41 @@ namespace animalAvecDatabase
         {
             try
             {
-                Console.WriteLine("Numéro de l’animal à modifier :");
-                string inputId = Console.ReadLine();
-                while (isNumeral(inputId)==false)
-                {
-                    Console.WriteLine("Le numéro de l’animal n'est pas valide.");
-                    Console.WriteLine("Numéro de l’animal à modifier : ");
-                    inputId = Console.ReadLine();
-                }
-                int animalId = Convert.ToInt32(inputId);
+                int animalId = modifierQuelAnimal();
 
                 Console.WriteLine("Nouveau nom de l’animal : ");
                 string animalNom = Console.ReadLine();
 
-                cnn.Open();
-                string sqltemp = "UPDATE animal SET nom=@nom1 WHERE id=@id1";
+                if (cnn.State == System.Data.ConnectionState.Closed)
+                {
+                    cnn.Open();
+                }
+                string sqltemp = "UPDATE animal SET nom=@nom1 WHERE id=@id1;";
                 MySqlCommand command = new MySqlCommand(sqltemp, cnn);
-                command.Parameters.AddWithValue("@id1", inputId);
+                command.Parameters.AddWithValue("@id1", animalId);
                 command.Parameters.AddWithValue("@nom1", animalNom);
                 command.ExecuteReader();
                 cnn.Close();
 
-                Console.WriteLine("Le nom du pensionnaire {0} a été modifié.", inputId);
+                Console.WriteLine("Le nom du pensionnaire {0} a été modifié.", animalId);
             }
             catch (Exception ex)
             {
                 systemError(ex);
             }
+        }
+
+        public int modifierQuelAnimal()
+        {
+            Console.WriteLine("Numéro de l’animal à modifier :");
+            string inputId = Console.ReadLine();
+            while (isNumeral(inputId) == false)
+            {
+                Console.WriteLine("Le numéro de l’animal n'est pas valide.");
+                Console.WriteLine("Numéro de l’animal à modifier : ");
+                inputId = Console.ReadLine();
+            }
+            return Convert.ToInt32(inputId);
         }
 
         private static bool isNumeral(string input)
@@ -407,7 +549,7 @@ namespace animalAvecDatabase
 
         public void systemError(Exception ex)
         {
-            Console.WriteLine("Vous avez une problème. Veuillez connecter le resposable." + ex.Message);
+            Console.WriteLine("Vous avez une problème. Veuillez connecter le resposable. " + ex.Message);
         }
     }
 }
